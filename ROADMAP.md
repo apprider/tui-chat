@@ -120,28 +120,59 @@ match outcome {
 ---
 
 ### 4. Higher-level `ChatApp` / `ChatSession` Builder
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/app.rs`
 
-A trait-based builder that wires the event loop. Users implement a `Backend` trait; `tui-chat` handles rendering, input, and streaming.
+A state-machine chat application that wires all components together.
+The caller drives the loop via `on_event()` (no async runtime required),
+and a `run_blocking()` convenience is provided for simple scripts.
 
-**Target API:**
+**API:**
 ```rust
-use tui_chat::app::{ChatApp, Backend, Delta};
+use tui_chat::app::{ChatApp, Delta};
+use tui_chat::theme::Theme;
 
-struct MyBackend;
-impl Backend for MyBackend {
-    async fn send(&self, msg: &str) -> Result<BoxStream<'_, Delta>, Error> { ... }
+// Blocking — simplest possible usage
+let mut app = ChatApp::new(Theme::dark());
+app.run_blocking(|msg| {
+    Ok(format!("Echo: {msg}"))
+}).unwrap();
+```
+
+**Custom event loop:**
+```rust
+use tui_chat::app::{ChatApp, AppEvent, AppAction, Delta};
+
+let mut app = ChatApp::new(Theme::dark());
+
+loop {
+    let frame = app.render(width);
+    renderer.render(&mut stdout, frame, width)?;
+
+    // Poll events from your backend + keyboard
+    match app.on_event(AppEvent::Key(ev)) {
+        AppAction::Exit => break,
+        AppAction::Submit(text) => {
+            // Send to backend, feed deltas back
+            app.on_event(AppEvent::Delta(Delta::Text(chunk)));
+            app.on_event(AppEvent::Delta(Delta::Done));
+        }
+        _ => {}
+    }
 }
-
-ChatApp::new(theme, MyBackend).run().await?;
 ```
 
 **Features:**
-- Optional tokio feature flag (disabled by default)
-- Blocking backend variant for simple scripts
-- Configurable frame rate, spinner cadence, history size
+- `ChatApp::new(theme)` — one-liner setup with all defaults
+- `with_registry(registry)` — swap in a custom `CommandRegistry`
+- `on_event(event)` — state-machine tick, returns `AppAction`
+- `render(width)` — compose the full frame
+- `run_blocking(backend)` — fully managed loop for simple use cases
+- Slash commands dispatched automatically via built-in registry
+- Streaming deltas: `Delta::Text` | `Delta::Thinking` | `Delta::Done` | `Delta::Error`
+- Spinner animation driven by `AppEvent::Timer`
+- Ctrl+C on empty buffer → exit (mirrors shell convention)
 
-**File:** `src/app.rs` (new module, feature-gated)
+**File:** `src/app.rs`
 
 ---
 
