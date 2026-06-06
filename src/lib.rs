@@ -2,6 +2,7 @@
 //! chat interfaces with markdown rendering, syntax highlighting,
 //! multi-line editors, and a differential scrollback renderer.
 
+pub mod commands;
 pub mod component;
 pub mod components;
 pub mod renderer;

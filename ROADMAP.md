@@ -77,30 +77,43 @@ vp.scroll_to_bottom(); // after new message arrives
 ---
 
 ### 3. Slash Command Registry + Built-in Help
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/commands/mod.rs`
 
-The `Editor` has `SuggestionProvider`, but there's no command *registry* or dispatch. A `CommandRegistry` wires suggestions, `/help`, and handler dispatch in one place.
+The `Editor` already had `SuggestionProvider`, but there was no command
+*registry* or dispatch. `CommandRegistry` wires suggestions, `/help`, and
+handler dispatch in one place, and implements `SuggestionProvider` so it
+plugs directly into the `Editor`.
 
-**Target API:**
+**API:**
 ```rust
 use tui_chat::commands::{CommandRegistry, CommandOutcome};
 
-let mut registry = CommandRegistry::new();
+let mut registry = CommandRegistry::with_builtins(); // /help, /clear, /exit
 registry.add("/model", "Switch LLM model", |args| {
-    CommandOutcome::ShowPicker { ... }
-});
-registry.add("/clear", "Clear chat", |_args| {
-    CommandOutcome::Action(Action::ClearChat)
+    CommandOutcome::Message(format!("picked: {args}"))
 });
 
-editor.set_registry(registry); // suggestions + dispatch
+// Wire into editor — auto-complete now knows your commands
+editor.set_provider(Box::new(registry.suggestion_provider()));
+
+// In the event loop
+let outcome = registry.dispatch(&text);
+match outcome {
+    CommandOutcome::Message(s) => chat.push(Box::new(Text::new(s))),
+    CommandOutcome::Clear => chat.clear(),
+    CommandOutcome::Exit => break,
+    _ => {}
+}
 ```
 
 **Features:**
-- Auto-generated `/help` page (styled as a system notice)
-- Sync and async handler support
-- Handler returns `CommandOutcome` that the caller's event loop interprets
-- Built-in `/help`, `/exit`, `/clear` as defaults
+- Built-in `/help` (auto-generated from current command list), `/clear`, `/exit`
+- Custom command registration with `name`, `description`, `handler`
+- Direct `SuggestionProvider` implementation — no separate `SlashProvider` needed
+- `suggestion_provider()` convenience for the editor
+- Duplicate commands: last one wins
+- `Send + Sync` for sharing across threads
+- `CommandOutcome`: `Message` | `Error` | `Clear` | `Exit` | `Quiet`
 
 **File:** `src/commands/mod.rs`
 
