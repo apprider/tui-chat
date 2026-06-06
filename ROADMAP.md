@@ -46,25 +46,31 @@ match picker.handle(&event) {
 ---
 
 ### 2. Scrollable Viewport / Virtual Container
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/components/viewport.rs`
 
-`Container` grows forever. For a 500-message chat, every keystroke re-renders thousands of lines. A `Viewport` clips to visible rows and supports scrolling.
+`Container` grows forever — every keystroke re-renders every child.
+`Viewport` clips to `visible_height` rows and supports scrolling with
+auto-scroll, resize, and an optional indicator.
 
-**Target API:**
+**API:**
 ```rust
 use tui_chat::components::viewport::Viewport;
+use tui_chat::component::Component;
 
 let mut vp = Viewport::new(theme, 24); // 24 visible rows
 vp.push(Box::new(UserMessage::new(theme, "hello")));
-vp.scroll_up(5);  // user pressed Shift+PgUp
+vp.scroll_up(5);       // Shift+PgUp
 vp.scroll_to_bottom(); // after new message arrives
 ```
 
 **Features:**
-- Maintains full child list internally but only renders visible slice
+- Maintains full child list but only renders visible slice
 - Scroll offset in rows (not messages — one message may span many rows)
-- Optional scroll indicator (e.g. "↑ 42 more messages")
-- Auto-scroll-to-bottom when at bottom and new content arrives
+- `auto_scroll` flag: new `push()` snaps to bottom on next render
+- `scroll_up/down/to_top/to_bottom` with clamping
+- Optional indicator line when scrolled away from top
+- `set_visible_height()` for terminal resize
+- `total_lines(width)` and `at_bottom(width)` for explicit queries
 
 **File:** `src/components/viewport.rs`
 
