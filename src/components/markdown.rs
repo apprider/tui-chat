@@ -464,15 +464,10 @@ impl MdRenderer {
             self.lines.push(edge("├", "┼", "┤"));
         }
 
-        // Reusable blank "spacer" row — keeps the column borders but
-        // empty cells. Inserting one between consecutive body rows gives
-        // tables breathing room without going full-blown spread-out.
-        let empty_cells: Vec<String> = vec![String::new(); col_w.len()];
-        let blank_row = self.format_table_row(&empty_cells, &col_w, &t.alignments, &v, false);
-
+        // Body rows with horizontal separators between them.
         for (i, body_row) in t.body.iter().enumerate() {
             if i > 0 {
-                self.lines.push(format!("{pad}{blank_row}"));
+                self.lines.push(edge("├", "┼", "┤"));
             }
             let row = self.format_table_row(body_row, &col_w, &t.alignments, &v, false);
             self.lines.push(format!("{pad}{row}"));
@@ -580,7 +575,7 @@ mod tests {
         let md = "| Lang   | Year |\n|--------|-----:|\n| Rust   | 2010 |\n| Python | 1991 |\n";
         let lines = render(&theme, md, 80);
         let plain: Vec<String> = lines.iter().map(|l| strip_ansi(l)).collect();
-        // Expect borders + 2 header/body rows + sep + bottom + blank.
+        // Expect borders + header + 2 body rows + seps + bottom + blank.
         assert!(
             plain.iter().any(|l| l.contains("Lang")),
             "header rendered: {plain:?}"
@@ -595,13 +590,13 @@ mod tests {
         );
         assert!(plain.iter().any(|l| l.contains("┌")), "top edge: {plain:?}");
         assert!(
-            plain.iter().any(|l| l.contains("├")),
-            "header sep: {plain:?}"
-        );
-        assert!(
             plain.iter().any(|l| l.contains("└")),
             "bottom edge: {plain:?}"
         );
+        // Count horizontal separators (├) — should be 2:
+        // one after header, one between body rows.
+        let sep_count = plain.iter().filter(|l| l.contains("├")).count();
+        assert_eq!(sep_count, 2, "expected 2 horizontal separators: {plain:?}");
     }
 
     #[test]
