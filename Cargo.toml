@@ -1,0 +1,17 @@
+[package]
+name = "tui-chat"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+description = "Inline chat TUI components for terminal applications"
+repository = "https://github.com/apprider/tui-chat"
+keywords = ["tui", "terminal", "chat", "markdown", "cli"]
+categories = ["command-line-interface"]
+rust-version = "1.75"
+
+[dependencies]
+crossterm = "0.28"
+unicode-width = "0.2"
+unicode-segmentation = "1"
+pulldown-cmark = { version = "0.13", default-features = false }
+syntect = { version = "5.2", default-features = false, features = ["parsing", "default-syntaxes", "default-themes", "regex-fancy"] }
