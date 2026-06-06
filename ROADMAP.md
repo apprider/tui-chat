@@ -179,29 +179,38 @@ loop {
 ## Tier 2 — Rich message types
 
 ### 5. System Notice Component
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/components/notice.rs`
 
-Pre-built `Notice` with info/warning/error severity and a subtle left border.
+Pre-built `Notice` with info/warning/error severity, a left border, and
+a subtle background tint.
 
-**Target API:**
+**API:**
 ```rust
 use tui_chat::components::notice::Notice;
 
-chat.push(Box::new(Notice::info("Session saved")));
-chat.push(Box::new(Notice::warning("Rate limit approaching")));
-chat.push(Box::new(Notice::error("API key invalid")));
+chat.push(Box::new(Notice::info(theme, "Session saved")));
+chat.push(Box::new(Notice::warning(theme, "Rate limit approaching")));
+chat.push(Box::new(Notice::error(theme, "API key invalid")));
 ```
+
+**Features:**
+- Three severities: `Info` (no icon), `Warning` (⚠), `Error` (✗)
+- Left border colored by severity
+- Background tint: `tool_pending_bg` for info/warning, `error_bg` for error
+- Multi-line support with word wrapping
+- Customizable border width via `with_border_width(n)`
 
 **File:** `src/components/notice.rs`
 
 ---
 
 ### 6. Collapsible / Foldable Blocks
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/components/foldable.rs`
 
-Hide long content behind a `▸ Show reasoning` toggle. Like HTML `<details>`.
+Hide long content behind a `▸ Show reasoning` toggle. Like HTML
+`<details>`.
 
-**Target API:**
+**API:**
 ```rust
 use tui_chat::components::foldable::Foldable;
 
@@ -210,39 +219,64 @@ chat.push(Box::new(Foldable::new(theme, "Reasoning")
     .content("The user wants...")));
 ```
 
+**Features:**
+- Toggle via `Enter` or `Space` when focused
+- Header shows `▸ Show label` / `▼ Hide label`
+- Body indented with muted vertical bar
+- `toggle()`, `expand()`, `collapse()` programmatic control
+
 **File:** `src/components/foldable.rs`
 
 ---
 
 ### 7. Tool Call / Result Block
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/components/tool_result.rs`
 
-Reusable styled block for tool executions with expand/collapse.
+Styled block showing a tool name and its result, with optional
+collapse and status indicators.
 
-**Target API:**
+**API:**
 ```rust
 use tui_chat::components::tool_result::ToolResult;
 
 chat.push(Box::new(ToolResult::new(theme, "read_file")
-    .success("fn main() { ... }")
-    .collapsed(true)));
+    .result("fn main() { ... }")
+    .collapsed(false)));
+
+chat.push(Box::new(ToolResult::new(theme, "rm")
+    .error("permission denied")));
 ```
+
+**Features:**
+- Status: `Running` (● accent), `Success` (● green), `Error` (✗ red)
+- Collapsed mode shows line count: `● tool · 5 lines`
+- Body indented with muted vertical bar
+- `with_preview_lines(n)` for collapsed preview limit
 
 **File:** `src/components/tool_result.rs`
 
 ---
 
 ### 8. Image / File Attachment Placeholder
-**Status:** 📋 Planned
+**Status:** ✅ Complete — see `src/components/attachment.rs`
 
-Styled box showing filename, size, mime-type for non-text content.
+Styled box showing filename, MIME type, and metadata for non-text
+content.
 
-**Target API:**
+**API:**
 ```rust
 use tui_chat::components::attachment::Attachment;
 
-chat.push(Box::new(Attachment::new(theme, "screenshot.png", "1920x1080")));
+chat.push(Box::new(Attachment::new(theme, "screenshot.png", "image/png")
+    .with_meta("1920×1080 · 2.3 MB")));
 ```
+
+**Features:**
+- 📎 paperclip icon in accent color
+- Filename in foreground color
+- MIME type + metadata in dimmed text
+- Left border on meta line
+- `with_details(mime, meta)` for bulk setting
 
 **File:** `src/components/attachment.rs`
 
@@ -358,19 +392,29 @@ Better handling of large pastes — preview before sending.
 
 ## Completed ✅
 
-| Feature | PR / Commit | Notes |
+| Feature | Status | Notes |
 |---|---|---|
-| Core component trait + Container | Initial commit | |
-| Differential renderer | Initial commit | DEC 2026 sync output |
-| Markdown + syntax highlighting | Initial commit | `pulldown-cmark` + `syntect` |
-| Multi-line editor | Initial commit | Slash autocomplete, history |
-| User / Assistant / StatusLine messages | Initial commit | |
-| Text primitives (Spacer, Text, TruncatedText) | Initial commit | |
-| Theme system (dark) | Initial commit | ANSI truecolor |
-| ANSI width/wrap utilities | Initial commit | `visible_width`, `wrap_text`, etc. |
-| Generic `StatusBar` | Initial commit | `StatusBar` builder |
-| `compose_left_right` layout primitive | Initial commit | Truncation-aware |
-| `format_compact` number formatter | Initial commit | `1.2k`, `4M`, etc. |
+| Core component trait + Container | ✅ | |
+| Differential renderer | ✅ | DEC 2026 sync output |
+| Markdown + syntax highlighting | ✅ | `pulldown-cmark` + `syntect` |
+| Multi-line editor | ✅ | Slash autocomplete, history |
+| User / Assistant / StatusLine messages | ✅ | |
+| Text primitives (Spacer, Text, TruncatedText) | ✅ | |
+| Theme system (dark) | ✅ | ANSI truecolor |
+| ANSI width/wrap utilities | ✅ | `visible_width`, `wrap_text`, etc. |
+| Generic `StatusBar` | ✅ | `StatusBar` builder |
+| `compose_left_right` layout primitive | ✅ | Truncation-aware |
+| `format_compact` number formatter | ✅ | `1.2k`, `4M`, etc. |
+| **Tier 1** | | |
+| Generic Picker | ✅ | Filter, scroll, keyboard nav |
+| Scrollable Viewport | ✅ | Auto-scroll, indicator, resize |
+| Command Registry | ✅ | `/help`, `/clear`, `/exit` + custom |
+| ChatApp Builder | ✅ | `run_blocking()` + custom event loop |
+| **Tier 2** | | |
+| System Notice | ✅ | Info/Warning/Error with border + tint |
+| Foldable Blocks | ✅ | `▸ Show` / `▼ Hide` toggle |
+| Tool Result Block | ✅ | Running/Success/Error status |
+| Attachment Placeholder | ✅ | 📎 filename + mime + meta |
 
 ---
 

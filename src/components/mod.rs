@@ -1,7 +1,11 @@
+pub mod attachment;
 pub mod editor;
+pub mod foldable;
 pub mod markdown;
 pub mod messages;
+pub mod notice;
 pub mod picker;
 pub mod status_bar;
 pub mod text;
+pub mod tool_result;
 pub mod viewport;
