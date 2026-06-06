@@ -12,13 +12,15 @@ This document tracks planned enhancements for the `tui-chat` crate.
 ## Tier 1 — Must-haves for a professional chat crate
 
 ### 1. Generic Picker / Selector Component
-**Status:** 🚧 In planning
+**Status:** ✅ Complete — see `src/components/picker.rs`
 
-Ko has a picker (`Picker`) but it's tied to `PickerAction` which imports `ko_types`. We need a purely generic version in `tui-chat`.
+A fully generic picker with filter, scrollable viewport, and keyboard
+navigation. No domain knowledge — the caller decides what "selected"
+means via `PickerOutcome::Selected`.
 
-**Target API:**
+**API:**
 ```rust
-use tui_chat::components::picker::{Picker, PickerItem, PickerEvent};
+use tui_chat::components::picker::{Picker, PickerItem, PickerOutcome};
 
 let items = vec![
     PickerItem::new("gpt-4", "GPT-4", "OpenAI · 128k context"),
@@ -26,14 +28,17 @@ let items = vec![
 ];
 
 let mut picker = Picker::new(theme, "Select model", items);
-// handle_input returns PickerEvent::Selected(item) | Cancelled | Continue
+match picker.handle(&event) {
+    PickerOutcome::Selected(item) => { /* act on item.key */ }
+    PickerOutcome::Cancel => { /* dismiss */ }
+    PickerOutcome::Continue => { /* re-render */ }
+}
 ```
 
 **Features:**
 - Filterable by typing after the `>` prompt
-- Scrollable viewport when items exceed visible rows
+- Scrollable viewport via `with_max_visible(n)`
 - `current` checkmark (✓) support
-- Configurable max visible items
 - Keyboard: ↑↓ navigate, Enter select, Esc cancel, type to filter
 
 **File:** `src/components/picker.rs`
